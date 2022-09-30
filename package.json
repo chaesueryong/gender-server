@@ -1,0 +1,35 @@
+{
+  "name": "gender-server",
+  "version": "1.0.0",
+  "description": "��#\u0000 \u0000g\u0000e\u0000n\u0000d\u0000e\u0000r\u0000-\u0000s\u0000e\u0000r\u0000v\u0000e\u0000r\u0000\r\u0000 \u0000",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --exec babel-node index.js",
+    "dev-memory": "nodemon --max-old-space-size=8192 --exec babel-node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sueryong/gender-server.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sueryong/gender-server/issues"
+  },
+  "homepage": "https://github.com/sueryong/gender-server#readme",
+  "devDependencies": {
+    "@babel/preset-env": "^7.16.5",
+    "@babel/plugin-proposal-decorators": "^7.16.5",
+    "@babel/node": "^7.16.5",
+    "nodemon": "^2.0.15"
+  },
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "express": "^4.17.2",
+    "glob": "^7.2.0",
+    "morgan": "^1.10.0",
+    "mysql": "^2.18.1",
+    "typeorm": "^0.2.41"
+  }
+}
