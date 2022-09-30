@@ -1,96 +1,63 @@
 import express from 'express';
-import glob from 'glob';
 import morgan from 'morgan';
+import helmet from "helmet";
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import requestIp from 'request-ip';
+require("dotenv").config()
 
 import DbConnection from './db/DbConnection';
+import {S3} from './util/S3';
+import moment from "moment";
+require('moment-timezone');
+import Router from './routes/index';
+import {CustomMiddleWare} from "./util/CustomMiddleWare";
 
 export default class Server{
     static port = 8000;
     static server = express();
-    static app = {};
+    static whitelist = ["http://localhost:8080", "https://gender.com"];
 
     static start() {
         (async () => {
+            moment.tz.setDefault(process.env.TIME_ZONE);
+
             await DbConnection.main();
+            await S3.main();
             await Server.main();
         })();
     };
 
-    static async main() {
-        try {
-            this.use();
-            await this.route();
-            this.listen();
-        }catch (e){
-            console.error(e);
-        }
+    static main() {
+        this.use();
+        this.listen();
     }
 
     static use() {
+        this.server.use(helmet());
+        this.server.use(cors({
+            origin: this.whitelist,
+            credentials: true,
+        }));
+        this.server.use(cookieParser());
         this.server.use(express.json());
         this.server.use(express.urlencoded({ extended: false }));
-        this.server.use(morgan('common', {}));
-    }
 
-    static async route() {
-        this.app.list = await this.filePathList();
+        morgan.token('date', (req, res, tz) => {
+            return moment().tz(tz).format('YYYY-MM-DD HH:mm:ss');
+        })
+        morgan.format('myformat', `:date[${process.env.TIME_ZONE}] | :method | :url | :response-time ms`);
 
-        this.server.get('/*', async (req, res) => {
-            await this.router(req, res, 'get');
-        });
+        this.server.use(morgan('myformat', {}));
 
-        this.server.post('/*', async (req, res) => {
-            await this.router(req, res, 'post');
-        });
-    }
+        this.server.use(CustomMiddleWare.getClientIp);
 
-    static filePathList () {
-        return new Promise((resolve, reject) => {
-            glob("server/controllers/**/*.js", (error, files) => {
-                if(error){
-                    reject(error);
-                    return;
-                }
-
-                resolve(files);
-            });
-        });
-    }
-
-    static async router(req, res, type) {
-        this.app.router = req.params['0'];
-
-        if (this.app.router === 'api') {
-            this.app.router = 'main';
-        }
-
-        this.app.result = {};
-
-        if (this.app.list.includes('server/controllers/' + this.app.router + '.js')) {
-            this.app.api = require('./controllers/' + this.app.router);
-            this.app.result.status = 'success';
-        } else {
-            this.app.api = require ('./controllers/404');
-            this.app.result.status = 'error';
-        }
-
-        switch (type) {
-            case 'get':
-                this.app.result.data = await this.app.api.get(req);
-                break;
-            case 'post':
-                this.app.result.data = await this.app.api.post(req);
-                break;
-            default:
-                break;
-        }
-
-        await res.json(this.app.result);
+        this.server.use('/', Router);
     }
 
     static listen() {
-        this.server.listen(this.port, () => {
-            console.log('connect server');
+        this.server.listen(this.port, '0.0.0.0',() => {
+            console.log(`connect server =>> ${ moment().format("YYYY-MM-DD HH:mm:ss") }`);
         });
     }
 }
