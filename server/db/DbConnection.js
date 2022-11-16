@@ -1,4 +1,4 @@
-import {createConnection, getConnection} from 'typeorm';
+import {createConnection, getConnection } from 'typeorm';
 require('dotenv').config();
 
 export default class DbConnection {
@@ -22,6 +22,7 @@ export default class DbConnection {
                 username: "root",
                 password: process.env.DB_PS,
                 database: "gender",
+                timezone: process.env.TIME_ZONE,
                 synchronize: true,
                 entities: [__dirname + '/entity/*.js']
             });
